@@ -27,7 +27,26 @@ namespace cedit {
 
 		void setConsoleMode();
 		void processInput(int);
-		void handleMouseEvent(MOUSE_EVENT_RECORD);
+
+		//keyboard
+		constexpr static unsigned int CTRL_KEY_PRESSED = 40;
+		constexpr static unsigned int CTRL_KEY_RELEASED = 32;
+			//offset of ACII keycode after ctrl is pressed
+			constexpr static unsigned int CTRL_KEY_OFFSET = 64; 
+
+		constexpr static unsigned int NAVIGATION_SEQUENCE = 288;
+		constexpr static unsigned int L_ARROW = 37;
+		constexpr static unsigned int U_ARROW = 38;
+		constexpr static unsigned int R_ARROW = 39;
+		constexpr static unsigned int D_ARROW = 40;
+
 		void handleKeyboardEvent(KEY_EVENT_RECORD);
+		void handleControlSequence(KEY_EVENT_RECORD);
+		void handleNavigationSequence(KEY_EVENT_RECORD);
+		char getCharacterPressed(KEY_EVENT_RECORD, bool ctrl = false);
+
+		//mouse
+		void handleMouseEvent(MOUSE_EVENT_RECORD);
+		
 	};
 }

@@ -94,13 +94,62 @@ void Editor::handleMouseEvent(MOUSE_EVENT_RECORD mouseEvent) {
 }
 
 void Editor::handleKeyboardEvent(KEY_EVENT_RECORD keyEvent) {
+	auto key = getCharacterPressed(keyEvent);
+
+	//process control keys first
+	if (key < 0) {
+		handleControlSequence(keyEvent);
+	}
+	else {
+		std::cout << key;
+		std::cout << " " << (keyEvent.bKeyDown ? "clicked" : "released");
+		std::cout << std::endl;
+	}
+}
+
+void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
+	if (keyEvent.dwControlKeyState == CTRL_KEY_PRESSED) {
+		auto key = getCharacterPressed(keyEvent, true);
+
+		if (key > 0) {
+			std::cout << "ctrl + " << key << std::endl;
+		}
+	}
+	else if(keyEvent.dwControlKeyState == NAVIGATION_SEQUENCE){
+		handleNavigationSequence(keyEvent);
+	}
+}
+
+void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
+	if (keyEvent.bKeyDown) {
+		switch (keyEvent.wVirtualKeyCode) {
+		case R_ARROW:
+			std::cout << "right arrow" << std::endl;
+			break;
+		case L_ARROW:
+			std::cout << "left arrow" << std::endl;
+			break;
+		case D_ARROW:
+			std::cout << "down arrow" << std::endl;
+			break;
+		case U_ARROW:
+			std::cout << "up arrow" << std::endl;
+			break;
+		}
+	}
+}
+
+char Editor::getCharacterPressed(KEY_EVENT_RECORD keyEvent, bool ctrl) {
 	CHAR key = keyEvent.uChar.AsciiChar;
 	auto upper = key >= 'A' && key <= 'Z';
 	auto lower = key >= 'a' && key <= 'z';
 	
-	if (upper || lower) {
-		std::cout << key;
-		std::cout << " " << (keyEvent.bKeyDown ? "clicked" : "released");
-		std::cout << std::endl;
+	if (ctrl) {
+		auto newEvent = keyEvent;
+		newEvent.uChar.AsciiChar = key + CTRL_KEY_OFFSET;
+		return getCharacterPressed(newEvent);
+	}
+	else {
+		return (upper || lower) ? key : -1;
 	}
 }
