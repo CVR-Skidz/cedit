@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <windows.h>
+#include <sstream>
 
 namespace cedit {
 	class Editor
@@ -17,16 +18,30 @@ namespace cedit {
 
 		bool session;
 		HANDLE input;
+		HANDLE output;
 		DWORD consoleInputMode; //mode of console before launcihng
 		INPUT_RECORD events[EVENT_STORAGE_LENGTH];
 
 		int lineCount;
-		unsigned int y;
-		unsigned int x;
+		unsigned int y; //line of cursor
+		unsigned int x; //column of cursor 
+		unsigned int xstart; //starting index in line in editor
+		unsigned int ystart; //starting index in line storage in editor
+		unsigned int width; //width of console screen buffer
+		unsigned int height;  //height of console screen buffer
 		std::vector<std::string> lines;
+
+		//status bar
+		std::string keyPressed;
+		
 
 		void setConsoleMode();
 		void processInput(int);
+		void printLines();
+		void printStatus();
+		void readConsoleBufferSize();
+		//returns the number of characters in string available to fit on screen.
+		int availableOutputLength(std::string);
 
 		//keyboard
 		constexpr static unsigned int CTRL_KEY_PRESSED = 40;
@@ -43,6 +58,7 @@ namespace cedit {
 		void handleKeyboardEvent(KEY_EVENT_RECORD);
 		void handleControlSequence(KEY_EVENT_RECORD);
 		void handleNavigationSequence(KEY_EVENT_RECORD);
+		void moveCursor(int, bool vert = false);
 		char getCharacterPressed(KEY_EVENT_RECORD, bool ctrl = false);
 
 		//mouse
