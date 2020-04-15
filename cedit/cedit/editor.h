@@ -13,7 +13,8 @@ namespace cedit {
 		
 	private:
 		constexpr static unsigned int EVENT_STORAGE_LENGTH = 64;
-		constexpr static DWORD CONSOLE_MODE = 
+		constexpr static unsigned int TAB_SIZE = 8;
+		constexpr static DWORD CONSOLE_MODE =
 			ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT;
 
 		bool session;
@@ -39,9 +40,12 @@ namespace cedit {
 		void processInput(int);
 		void printLines();
 		void printStatus();
-		void readConsoleBufferSize();
+		void getConsoleSize();
+		std::string convertWhitespace(std::string);
 		//returns the number of characters in string available to fit on screen.
 		int availableOutputLength(std::string);
+		std::string currentLine();
+		int realLength(std::string);
 
 		//keyboard
 		constexpr static unsigned int CTRL_KEY_PRESSED = 40;
@@ -58,11 +62,20 @@ namespace cedit {
 		void handleKeyboardEvent(KEY_EVENT_RECORD);
 		void handleControlSequence(KEY_EVENT_RECORD);
 		void handleNavigationSequence(KEY_EVENT_RECORD);
-		void moveCursor(int, bool vert = false);
+		void moveCursorVert(int);
+		void moveCursorHor(int);
 		char getCharacterPressed(KEY_EVENT_RECORD, bool ctrl = false);
 
 		//mouse
 		void handleMouseEvent(MOUSE_EVENT_RECORD);
 		
+		//debug
+		void fillLines() {
+			for (auto i = 0; i < 20; ++i) {
+				lines.push_back("Test" + std::to_string(i));
+			}
+			lines.push_back("TestTestTestTestTestTestTestTestTestTestTestTestTestTestTest");
+			lineCount = lines.size();
+		}
 	};
 }

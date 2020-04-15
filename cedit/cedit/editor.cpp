@@ -1,6 +1,7 @@
 #include "editor.h"
 
 using namespace cedit;
+using namespace std::literals::string_literals;
 
 int main() {
 	Editor editor;
@@ -21,7 +22,9 @@ Editor::Editor() {
 	height = 0;
 
 	DWORD inputEventsCount = 0;
-	readConsoleBufferSize();
+	getConsoleSize();
+
+	fillLines();
 
 	while (session) {
 		ReadConsoleInput(input, events, EVENT_STORAGE_LENGTH, &inputEventsCount);
@@ -53,7 +56,8 @@ void Editor::processInput(int nEvents) {
 				break;
 
 			case WINDOW_BUFFER_SIZE_EVENT:
-				readConsoleBufferSize();
+				getConsoleSize();
+				printLines();
 				break;
 
 			case FOCUS_EVENT:
@@ -72,10 +76,15 @@ void Editor::processInput(int nEvents) {
 
 void Editor::printLines() {
 	system("cls");
-	for (auto i : lines) {
-		//print lines
-	}
 
+	//index of line to stop printing at
+	int bufferEndPos = lineCount < height ? lineCount : ystart + height;
+
+	for (auto i = ystart; i < bufferEndPos; ++i) {
+		auto line = lines[i];
+		std::cout << line.substr(xstart, 
+			availableOutputLength(line) + 1) << std::endl;
+	}
 	printStatus();
 }
 
@@ -88,25 +97,71 @@ void Editor::printStatus() {
 	status << "Recieved: " << keyPressed << "\t" << x << "," << y << "\tStart: "
 		<< xstart << "," << ystart << "\tSize: " << width << "," << height;
 
-	std::cout << status.str();
+	auto finalStatusBar = convertWhitespace(status.str());
+	finalStatusBar = finalStatusBar.substr(0,
+		availableOutputLength(finalStatusBar) + 1);
+
+	std::cout << finalStatusBar;
 	SetConsoleCursorPosition(output, originalPosition);
 }
 
-void Editor::readConsoleBufferSize() {
+void Editor::getConsoleSize() {
 	CONSOLE_SCREEN_BUFFER_INFO screen;
 	GetConsoleScreenBufferInfo(output, &screen);
 
 	width = screen.srWindow.Right - screen.srWindow.Left;
 	height = screen.srWindow.Bottom - screen.srWindow.Top;
+
+	COORD newBufferSize = { width + 1, height + 1 };
+	SetConsoleScreenBufferSize(output, newBufferSize);
+}
+
+std::string Editor::convertWhitespace(std::string s) {
+	std::ostringstream out;
+
+	for (auto i : s) {
+		if (i == '\t') {
+			for (auto j = 0; j < TAB_SIZE; ++j) { out << " "; }
+		}
+		else {
+			out << i;
+		}
+	}
+
+	return out.str();
 }
 
 int Editor::availableOutputLength(std::string s) {
-	if (static_cast<int>(s.length()) > width) {
-		return width;
+	int len = realLength(s);
+	if (len - xstart > width) {
+		return width - 1;
 	}
 	else {
-		static_cast<int>(s.length());
+		return len - xstart;
 	}
+}
+
+std::string Editor::currentLine() {
+	if (lineCount != 0 && !(y - ystart > lineCount - 1)) {
+		return lines[y - ystart];
+	}
+	else {
+		return ""s;
+	}
+}
+
+int Editor::realLength(std::string s) {
+	int lineLength = s.length();
+
+	for (auto i : s) {
+		if (i == '\t') {
+			lineLength += TAB_SIZE - 1;
+		}
+	}
+
+	lineLength -= lineLength ? 1 : 0;
+
+	return lineLength;
 }
 
 void Editor::handleMouseEvent(MOUSE_EVENT_RECORD mouseEvent) {
@@ -171,53 +226,64 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 		switch (keyEvent.wVirtualKeyCode) {
 		case R_ARROW:
 			keyPressed = "right arrow";
-			moveCursor(1);
+			moveCursorHor(1);
 			break;
 		case L_ARROW:
 			keyPressed = "left arrow";
-			moveCursor(-1);
+			moveCursorHor(-1);
 			break;
 		case D_ARROW:
 			keyPressed = "down arrow";
-			moveCursor(1, true);
+			moveCursorVert(1);
 			break;
 		case U_ARROW:
 			keyPressed = "up arrow";
-			moveCursor(-1, true);
+			moveCursorVert(-1);
 			break;
 		}
 	}
 }
 
-void Editor::moveCursor(int amount, bool vert) {
-	int newpos;
+void Editor::moveCursorVert(int amount) {
+	int newpos = y + amount;
 
-	if (vert) {
-		newpos = y + amount;
-
-		//if cursor going off screen top
-		if (newpos < 0) {
-			newpos = 0;
-		}
-		else if (newpos > height - 1) { //if cursor going off screen  bottom adjusted for status bar
-			newpos = height - 1; 
-		}
-
-		y = newpos;
+	//if cursor going off screen top
+	if (newpos < 0) {
+		newpos = 0;
+		if (ystart) --ystart;
 	}
-	else {
-		newpos = x + amount;
-
-		//if cursor going off screen left
-		if (newpos < 0) {
-			newpos = 0;
-		}
-		else if (newpos > width) { //if cursor going off screen right
-			newpos = width;
-		}
-
-		x = newpos;
+	else if (newpos > lineCount - 1) { //cant move passed end of file
+		newpos = lineCount - 1;
 	}
+	else if (newpos > height - 1) { //if cursor going off bottom screen, adjusted for status bar
+		newpos = height - 1;
+		if (newpos + ystart < lineCount - 1) ystart++;
+	}
+
+	y = newpos;
+
+	COORD pos = { x, y };
+	SetConsoleCursorPosition(output, pos);
+}
+
+void Editor::moveCursorHor(int amount) {
+	int newpos = x + amount;
+	std::string line = currentLine();
+	int lineLength = realLength(line);
+
+	//if cursor going off screen left
+	if (newpos < 0) {
+		newpos = 0;
+	}
+	else if (newpos > lineLength) { //cant move passed end of line
+		newpos = lineLength;
+	}
+	else if (newpos > width) { //if cursor going off screen right
+		newpos = width;
+		if (newpos + xstart < lineLength) xstart++;
+	}
+
+	x = newpos;
 
 	COORD pos = { x, y };
 	SetConsoleCursorPosition(output, pos);
