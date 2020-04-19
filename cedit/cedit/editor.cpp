@@ -24,8 +24,6 @@ Editor::Editor() {
 	DWORD inputEventsCount = 0;
 	getConsoleSize();
 
-	fillLines();
-
 	while (session) {
 		ReadConsoleInput(input, events, EVENT_STORAGE_LENGTH, &inputEventsCount);
 		processInput(inputEventsCount);
@@ -61,15 +59,15 @@ void Editor::processInput(int nEvents) {
 				break;
 
 			case FOCUS_EVENT:
-				std::cout << "Received window focus event" << std::endl;
+				keyPressed = "window focus event"s;
 				break;
 
 			case MENU_EVENT:
-				std::cout << "Received menu event" << std::endl;
+				keyPressed = "menu event"s;
 				break;
 
 			default:
-				std::cout << "Received unhandled input event" << std::endl;
+				keyPressed = "unhandled input event"s;
 		}
 	}
 }
@@ -98,8 +96,11 @@ void Editor::printStatus() {
 		<< xstart << "," << ystart << "\tSize: " << width << "," << height;
 
 	auto finalStatusBar = convertWhitespace(status.str());
-	finalStatusBar = finalStatusBar.substr(0,
-		availableOutputLength(finalStatusBar) + 1);
+	
+	//check if the status bar can not fit in buffer
+	if (absoluteOutputLength(finalStatusBar) == width - 1) {
+		finalStatusBar = finalStatusBar.substr(0, width - 1);
+	}
 
 	std::cout << finalStatusBar;
 	SetConsoleCursorPosition(output, originalPosition);
@@ -131,6 +132,8 @@ std::string Editor::convertWhitespace(std::string s) {
 	return out.str();
 }
 
+// Returns the avaialbe length of the string printable to the console buffer
+// after scrolling horizontally to the current cursor position.
 int Editor::availableOutputLength(std::string s) {
 	int len = realLength(s);
 	if (len - xstart > width) {
@@ -138,6 +141,21 @@ int Editor::availableOutputLength(std::string s) {
 	}
 	else {
 		return len - xstart;
+	}
+}
+
+// Returns the available length of the string printable to the console buffer
+// without regarding the position of the cursor.
+//
+// Useful for fixed position components.
+int Editor::absoluteOutputLength(std::string s) {
+	int len = realLength(s);
+
+	if (len > width) {
+		return width - 1;
+	}
+	else {
+		return len;
 	}
 }
 
@@ -159,9 +177,31 @@ int Editor::realLength(std::string s) {
 		}
 	}
 
-	lineLength -= lineLength ? 1 : 0;
+	//lineLength -= lineLength ? 1 : 0;
 
 	return lineLength;
+}
+
+void Editor::insertCharacter(char c) {
+	if (!lineCount) {
+		addLine("");
+	}
+
+	int lineLength = lines[y].length();
+
+	if (x > lineLength) {
+		lines[y] += c;
+	}
+	else {
+		lines[y].insert(x, 1, c);
+	}
+
+	moveCursorHor(1);
+}
+
+void Editor::addLine(std::string s) {
+	lines.push_back(s);
+	lineCount++;
 }
 
 void Editor::handleMouseEvent(MOUSE_EVENT_RECORD mouseEvent) {
@@ -202,6 +242,7 @@ void Editor::handleKeyboardEvent(KEY_EVENT_RECORD keyEvent) {
 		handleControlSequence(keyEvent);
 	}
 	else if (keyEvent.bKeyDown) {
+		insertCharacter(key);
 		keyPressed = std::string();
 		keyPressed += key;
 	}
@@ -219,27 +260,37 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 	else if(keyEvent.dwControlKeyState == NAVIGATION_SEQUENCE){
 		handleNavigationSequence(keyEvent);
 	}
+	else {
+		keyPressed = std::to_string(keyEvent.wVirtualKeyCode);
+	}
 }
 
 void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 	if (keyEvent.bKeyDown) {
 		switch (keyEvent.wVirtualKeyCode) {
-		case R_ARROW:
-			keyPressed = "right arrow";
-			moveCursorHor(1);
-			break;
-		case L_ARROW:
-			keyPressed = "left arrow";
-			moveCursorHor(-1);
-			break;
-		case D_ARROW:
-			keyPressed = "down arrow";
-			moveCursorVert(1);
-			break;
-		case U_ARROW:
-			keyPressed = "up arrow";
-			moveCursorVert(-1);
-			break;
+			case R_ARROW:
+				keyPressed = "right arrow";
+				moveCursorHor(1);
+				break;
+
+			case L_ARROW:
+				keyPressed = "left arrow";
+				moveCursorHor(-1);
+				break;
+
+			case D_ARROW:
+				keyPressed = "down arrow";
+				moveCursorVert(1);
+				break;
+
+			case U_ARROW:
+				keyPressed = "up arrow";
+				moveCursorVert(-1);
+				break;
+
+			default:
+				keyPressed = std::to_string(keyEvent.wVirtualKeyCode);
+				break;
 		}
 	}
 }
@@ -253,7 +304,7 @@ void Editor::moveCursorVert(int amount) {
 		if (ystart) --ystart;
 	}
 	else if (newpos > lineCount - 1) { //cant move passed end of file
-		newpos = lineCount - 1;
+		newpos = (lineCount ? lineCount - 1 : 0);
 	}
 	else if (newpos > height - 1) { //if cursor going off bottom screen, adjusted for status bar
 		newpos = height - 1;
@@ -274,6 +325,7 @@ void Editor::moveCursorHor(int amount) {
 	//if cursor going off screen left
 	if (newpos < 0) {
 		newpos = 0;
+		if (xstart) { --xstart; }
 	}
 	else if (newpos > lineLength) { //cant move passed end of line
 		newpos = lineLength;
@@ -291,8 +343,7 @@ void Editor::moveCursorHor(int amount) {
 
 char Editor::getCharacterPressed(KEY_EVENT_RECORD keyEvent, bool ctrl) {
 	CHAR key = keyEvent.uChar.AsciiChar;
-	auto upper = key >= 'A' && key <= 'Z';
-	auto lower = key >= 'a' && key <= 'z';
+	auto printable = key >= PRINTABLE_START && key <= PRINTABLE_END;
 	
 	if (ctrl) {
 		auto newEvent = keyEvent;
@@ -300,6 +351,6 @@ char Editor::getCharacterPressed(KEY_EVENT_RECORD keyEvent, bool ctrl) {
 		return getCharacterPressed(newEvent);
 	}
 	else {
-		return (upper || lower) ? key : -1;
+		return printable ? key : -1;
 	}
 }

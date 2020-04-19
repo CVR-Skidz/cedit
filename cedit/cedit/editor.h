@@ -20,7 +20,7 @@ namespace cedit {
 		bool session;
 		HANDLE input;
 		HANDLE output;
-		DWORD consoleInputMode; //mode of console before launcihng
+		DWORD consoleInputMode; //mode of console before launching
 		INPUT_RECORD events[EVENT_STORAGE_LENGTH];
 
 		int lineCount;
@@ -35,19 +35,22 @@ namespace cedit {
 		//status bar
 		std::string keyPressed;
 		
-
 		void setConsoleMode();
 		void processInput(int);
 		void printLines();
 		void printStatus();
 		void getConsoleSize();
 		std::string convertWhitespace(std::string);
-		//returns the number of characters in string available to fit on screen.
 		int availableOutputLength(std::string);
+		int absoluteOutputLength(std::string);
 		std::string currentLine();
 		int realLength(std::string);
+		void insertCharacter(char);
+		void addLine(std::string);
 
 		//keyboard
+		constexpr static unsigned int PRINTABLE_START = '!';
+		constexpr static unsigned int PRINTABLE_END = '~';
 		constexpr static unsigned int CTRL_KEY_PRESSED = 40;
 		constexpr static unsigned int CTRL_KEY_RELEASED = 32;
 			//offset of ACII keycode after ctrl is pressed
@@ -58,6 +61,10 @@ namespace cedit {
 		constexpr static unsigned int U_ARROW = 38;
 		constexpr static unsigned int R_ARROW = 39;
 		constexpr static unsigned int D_ARROW = 40;
+		constexpr static unsigned int DEL_KEY = 46;
+
+		constexpr static unsigned int ENTER = 13;
+		constexpr static unsigned int BACKSPACE = 8;
 
 		void handleKeyboardEvent(KEY_EVENT_RECORD);
 		void handleControlSequence(KEY_EVENT_RECORD);
