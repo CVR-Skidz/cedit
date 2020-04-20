@@ -46,7 +46,8 @@ namespace cedit {
 		std::string currentLine();
 		int realLength(std::string);
 		void insertCharacter(char);
-		void addLine(std::string);
+		void removeCharacter(int);
+		void addLine(std::string, int pos = -1);
 
 		//keyboard
 		constexpr static unsigned int PRINTABLE_START = '!';
@@ -69,8 +70,12 @@ namespace cedit {
 		void handleKeyboardEvent(KEY_EVENT_RECORD);
 		void handleControlSequence(KEY_EVENT_RECORD);
 		void handleNavigationSequence(KEY_EVENT_RECORD);
+		void handleSpecialCharacter(KEY_EVENT_RECORD);
+
+		void snapCursorToLine();
 		void moveCursorVert(int);
 		void moveCursorHor(int);
+		void processEnter();
 		char getCharacterPressed(KEY_EVENT_RECORD, bool ctrl = false);
 
 		//mouse

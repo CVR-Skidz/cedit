@@ -76,7 +76,7 @@ void Editor::printLines() {
 	system("cls");
 
 	//index of line to stop printing at
-	int bufferEndPos = lineCount < height ? lineCount : ystart + height;
+	int bufferEndPos = lineCount <= height ? lineCount : ystart + height;
 
 	for (auto i = ystart; i < bufferEndPos; ++i) {
 		auto line = lines[i];
@@ -187,21 +187,32 @@ void Editor::insertCharacter(char c) {
 		addLine("");
 	}
 
-	int lineLength = lines[y].length();
-
+	int lineLength = lines[y + ystart].length();
+	 
 	if (x > lineLength) {
-		lines[y] += c;
+		lines[y + ystart] += c;
 	}
 	else {
-		lines[y].insert(x, 1, c);
+		lines[y + ystart].insert(x, 1, c);
 	}
 
 	moveCursorHor(1);
 }
 
-void Editor::addLine(std::string s) {
-	lines.push_back(s);
-	lineCount++;
+void Editor::removeCharacter(int pos) {
+	if (pos < currentLine().length()) {
+		lines[y + ystart].erase(lines[y + ystart].begin() + pos);
+	}
+}
+
+void Editor::addLine(std::string s, int pos) {
+	if (pos >= 0 && pos < lines.size()) {
+		lines.insert(lines.begin() + pos, s);
+	}
+	else {
+		lines.push_back(s);
+		lineCount++;
+	}
 }
 
 void Editor::handleMouseEvent(MOUSE_EVENT_RECORD mouseEvent) {
@@ -262,6 +273,7 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 	}
 	else {
 		keyPressed = std::to_string(keyEvent.wVirtualKeyCode);
+		handleSpecialCharacter(keyEvent);
 	}
 }
 
@@ -295,6 +307,39 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 	}
 }
 
+void Editor::handleSpecialCharacter(KEY_EVENT_RECORD keyEvent) {
+	if (keyEvent.bKeyDown) {
+		switch (keyEvent.wVirtualKeyCode) {
+			case ENTER:
+				processEnter();
+				break;
+		
+			case BACKSPACE:
+				if (x != 0) {
+					removeCharacter(x - 1);
+					moveCursorHor(-1);
+				}
+				else if (y != 0) {
+					int appendPoint = lines[y + ystart - 1].length();
+					lines[y + ystart - 1] += lines[y + ystart]; //append current line to preceeding line
+					lines.erase(lines.begin() + y + ystart);
+					x = appendPoint;
+					if (ystart) --ystart; else --y;
+					--lineCount;
+				}
+				break;
+		}
+	}
+}
+
+void Editor::snapCursorToLine() {
+	int lineLength = currentLine().length();
+
+	if (x > lineLength) {
+		x = lineLength;
+	}
+}
+
 void Editor::moveCursorVert(int amount) {
 	int newpos = y + amount;
 
@@ -308,10 +353,11 @@ void Editor::moveCursorVert(int amount) {
 	}
 	else if (newpos > height - 1) { //if cursor going off bottom screen, adjusted for status bar
 		newpos = height - 1;
-		if (newpos + ystart < lineCount - 1) ystart++;
+		if (newpos + ystart < lineCount) ystart++;
 	}
 
 	y = newpos;
+	snapCursorToLine();
 
 	COORD pos = { x, y };
 	SetConsoleCursorPosition(output, pos);
@@ -338,6 +384,21 @@ void Editor::moveCursorHor(int amount) {
 	x = newpos;
 
 	COORD pos = { x, y };
+	SetConsoleCursorPosition(output, pos);
+}
+
+void Editor::processEnter() {
+	//add new line;
+	addLine(""s, y + ystart + 1);
+	++y;
+
+	if (y > height - 1) {
+		y = height - 1;
+		++ystart;
+	}
+
+	x = 0;
+	COORD pos = { x,y };
 	SetConsoleCursorPosition(output, pos);
 }
 
