@@ -36,19 +36,22 @@ namespace cedit {
 		std::string keyPressed;
 		
 		void setConsoleMode();
+		void getConsoleSize();
 		void processInput(int);
+		
 		void printLines();
 		void printStatus();
-		void getConsoleSize();
-		std::string convertWhitespace(std::string);
-		int availableOutputLength(std::string);
-		int absoluteOutputLength(std::string);
-		std::string currentLine();
-		int realLength(std::string);
 		void insertCharacter(char);
 		void removeCharacter(int);
 		void addLine(std::string, int pos = -1);
+		void concatLine(bool before = true);
 
+		std::string convertWhitespace(std::string);
+		int availableOutputLength(std::string);
+		int absoluteOutputLength(std::string);
+		int realLength(std::string);
+		std::string currentLine();
+		
 		//keyboard
 		constexpr static unsigned int PRINTABLE_START = '!';
 		constexpr static unsigned int PRINTABLE_END = '~';
@@ -66,6 +69,7 @@ namespace cedit {
 
 		constexpr static unsigned int ENTER = 13;
 		constexpr static unsigned int BACKSPACE = 8;
+		constexpr static unsigned int SPACE = 32;
 
 		void handleKeyboardEvent(KEY_EVENT_RECORD);
 		void handleControlSequence(KEY_EVENT_RECORD);

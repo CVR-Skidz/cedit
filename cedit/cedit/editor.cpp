@@ -160,8 +160,8 @@ int Editor::absoluteOutputLength(std::string s) {
 }
 
 std::string Editor::currentLine() {
-	if (lineCount != 0 && !(y - ystart > lineCount - 1)) {
-		return lines[y - ystart];
+	if (lineCount != 0 && !(y + ystart > lineCount - 1)) {
+		return lines[y + ystart];
 	}
 	else {
 		return ""s;
@@ -193,7 +193,7 @@ void Editor::insertCharacter(char c) {
 		lines[y + ystart] += c;
 	}
 	else {
-		lines[y + ystart].insert(x, 1, c);
+		lines[y + ystart].insert(x + xstart, 1, c);
 	}
 
 	moveCursorHor(1);
@@ -201,7 +201,7 @@ void Editor::insertCharacter(char c) {
 
 void Editor::removeCharacter(int pos) {
 	if (pos < currentLine().length()) {
-		lines[y + ystart].erase(lines[y + ystart].begin() + pos);
+		lines[y + ystart].erase(lines[y + ystart].begin() + pos + xstart);
 	}
 }
 
@@ -213,6 +213,22 @@ void Editor::addLine(std::string s, int pos) {
 		lines.push_back(s);
 		lineCount++;
 	}
+}
+
+void Editor::concatLine(bool before) {
+	int lineIndex = before ? y + ystart - 1 : y + ystart;
+	int appendPoint = lines[lineIndex].length();
+
+	lines[lineIndex] += lines[lineIndex + 1];
+	lines.erase(lines.begin() + lineIndex + 1);
+	x = appendPoint;
+
+	//reposition y coordinate
+	if (before) {
+		if (ystart) --ystart; else --y;
+	}
+	
+	--lineCount;
 }
 
 void Editor::handleMouseEvent(MOUSE_EVENT_RECORD mouseEvent) {
@@ -300,6 +316,15 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 				moveCursorVert(-1);
 				break;
 
+			case DEL_KEY:
+				if (x != lines[y + ystart].length()) {
+					removeCharacter(x);
+				}
+				else if (y + ystart != lineCount - 1){
+					concatLine(false);
+				}
+				break;
+
 			default:
 				keyPressed = std::to_string(keyEvent.wVirtualKeyCode);
 				break;
@@ -317,16 +342,16 @@ void Editor::handleSpecialCharacter(KEY_EVENT_RECORD keyEvent) {
 			case BACKSPACE:
 				if (x != 0) {
 					removeCharacter(x - 1);
-					moveCursorHor(-1);
+					if (xstart) --xstart;
+					else moveCursorHor(-1);
 				}
 				else if (y != 0) {
-					int appendPoint = lines[y + ystart - 1].length();
-					lines[y + ystart - 1] += lines[y + ystart]; //append current line to preceeding line
-					lines.erase(lines.begin() + y + ystart);
-					x = appendPoint;
-					if (ystart) --ystart; else --y;
-					--lineCount;
+					concatLine();
 				}
+				break;
+
+			case SPACE:
+				insertCharacter(' ');
 				break;
 		}
 	}
@@ -388,8 +413,14 @@ void Editor::moveCursorHor(int amount) {
 }
 
 void Editor::processEnter() {
+	std::string newLine = currentLine();
+	int distanceToEnd = newLine.length() - x - xstart;
+	newLine = newLine.substr(x + xstart, distanceToEnd);
+	std::string& currentL = lines[y + ystart];
+	currentL = currentL.erase(x + xstart, currentL.length() - distanceToEnd);
+
 	//add new line;
-	addLine(""s, y + ystart + 1);
+	addLine(newLine, y + ystart + 1);
 	++y;
 
 	if (y > height - 1) {
