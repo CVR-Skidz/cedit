@@ -313,6 +313,33 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 				moveCursorVert(-1);
 				break;
 
+			case VK_HOME:
+				x = 0;
+				xstart = 0;
+				break;
+
+			case VK_END:
+				x = currentLine().length();
+				standardizeCoords();
+				break;
+
+			case VK_PRIOR:	//page up
+				if (y >= height - 1) y -= (height - 1 - ystart);
+				else y = 0;
+
+				x = 0;
+				standardizeCoords();
+				break;
+
+			case VK_NEXT:	//page down
+				y += height - 1;
+
+				if (y > lineCount - 1) y = lineCount - 1;
+				
+				x = 0;
+				standardizeCoords();
+				break;
+
 			default:
 				keyPressed = std::to_string(keyEvent.wVirtualKeyCode);
 				break;
@@ -454,15 +481,21 @@ char Editor::getCharacterPressed(KEY_EVENT_RECORD keyEvent, bool ctrl) {
 
 void Editor::standardizeCoords() {
 	int xoverflow = x - width;
-	int yoverflow = y - height - 1;
+	int yoverflow = y - (height - 1);
 
 	if (xoverflow > 0) {
 		x = width;
 		xstart = xoverflow;
 	}
+	else if (xoverflow < 0) {
+		xstart = 0;
+	}
 
 	if (yoverflow > 0) {
 		y = height - 1;
 		ystart = yoverflow;
+	}
+	else if (yoverflow < 0) {
+		ystart = 0;
 	}
 }
