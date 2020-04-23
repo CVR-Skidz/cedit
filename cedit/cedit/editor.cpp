@@ -229,6 +229,7 @@ void Editor::concatLine(bool before) {
 	}
 	
 	--lineCount;
+	standardizeCoords();
 }
 
 void Editor::handleMouseEvent(MOUSE_EVENT_RECORD mouseEvent) {
@@ -276,7 +277,7 @@ void Editor::handleKeyboardEvent(KEY_EVENT_RECORD keyEvent) {
 }
 
 void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
-	if (keyEvent.dwControlKeyState == CTRL_KEY_PRESSED) {
+	if (keyEvent.dwControlKeyState & LEFT_CTRL_PRESSED) {
 		auto key = getCharacterPressed(keyEvent, true);
 
 		if (key > 0) {
@@ -284,11 +285,7 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 			keyPressed += key;
 		}
 	}
-	else if(keyEvent.dwControlKeyState == NAVIGATION_SEQUENCE){
-		handleNavigationSequence(keyEvent);
-	}
 	else {
-		keyPressed = std::to_string(keyEvent.wVirtualKeyCode);
 		handleSpecialCharacter(keyEvent);
 	}
 }
@@ -296,33 +293,24 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 	if (keyEvent.bKeyDown) {
 		switch (keyEvent.wVirtualKeyCode) {
-			case R_ARROW:
+			case VK_RIGHT:
 				keyPressed = "right arrow";
 				moveCursorHor(1);
 				break;
 
-			case L_ARROW:
+			case VK_LEFT:
 				keyPressed = "left arrow";
 				moveCursorHor(-1);
 				break;
 
-			case D_ARROW:
+			case VK_DOWN:
 				keyPressed = "down arrow";
 				moveCursorVert(1);
 				break;
 
-			case U_ARROW:
+			case VK_UP:
 				keyPressed = "up arrow";
 				moveCursorVert(-1);
-				break;
-
-			case DEL_KEY:
-				if (x != lines[y + ystart].length()) {
-					removeCharacter(x);
-				}
-				else if (y + ystart != lineCount - 1){
-					concatLine(false);
-				}
 				break;
 
 			default:
@@ -335,11 +323,11 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 void Editor::handleSpecialCharacter(KEY_EVENT_RECORD keyEvent) {
 	if (keyEvent.bKeyDown) {
 		switch (keyEvent.wVirtualKeyCode) {
-			case ENTER:
+			case VK_RETURN:
 				processEnter();
 				break;
 		
-			case BACKSPACE:
+			case VK_BACK:
 				if (x != 0) {
 					removeCharacter(x - 1);
 					if (xstart) --xstart;
@@ -350,8 +338,24 @@ void Editor::handleSpecialCharacter(KEY_EVENT_RECORD keyEvent) {
 				}
 				break;
 
-			case SPACE:
+			case VK_SPACE:
 				insertCharacter(' ');
+				break;
+
+			case VK_DELETE:
+				if (x != lines[y + ystart].length()) {
+					removeCharacter(x);
+				}
+				else if (y + ystart != lineCount - 1) {
+					concatLine(false);
+				}
+				break;
+
+			case VK_TAB:
+				for (int i = 0; i < TAB_SIZE; ++i) { insertCharacter(' '); }
+
+			default:
+				handleNavigationSequence(keyEvent);
 				break;
 		}
 	}
@@ -429,6 +433,7 @@ void Editor::processEnter() {
 	}
 
 	x = 0;
+	xstart = 0;
 	COORD pos = { x,y };
 	SetConsoleCursorPosition(output, pos);
 }
@@ -444,5 +449,20 @@ char Editor::getCharacterPressed(KEY_EVENT_RECORD keyEvent, bool ctrl) {
 	}
 	else {
 		return printable ? key : -1;
+	}
+}
+
+void Editor::standardizeCoords() {
+	int xoverflow = x - width;
+	int yoverflow = y - height - 1;
+
+	if (xoverflow > 0) {
+		x = width;
+		xstart = xoverflow;
+	}
+
+	if (yoverflow > 0) {
+		y = height - 1;
+		ystart = yoverflow;
 	}
 }

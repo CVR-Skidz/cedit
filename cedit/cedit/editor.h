@@ -55,21 +55,8 @@ namespace cedit {
 		//keyboard
 		constexpr static unsigned int PRINTABLE_START = '!';
 		constexpr static unsigned int PRINTABLE_END = '~';
-		constexpr static unsigned int CTRL_KEY_PRESSED = 40;
-		constexpr static unsigned int CTRL_KEY_RELEASED = 32;
 			//offset of ACII keycode after ctrl is pressed
 			constexpr static unsigned int CTRL_KEY_OFFSET = 64; 
-
-		constexpr static unsigned int NAVIGATION_SEQUENCE = 288;
-		constexpr static unsigned int L_ARROW = 37;
-		constexpr static unsigned int U_ARROW = 38;
-		constexpr static unsigned int R_ARROW = 39;
-		constexpr static unsigned int D_ARROW = 40;
-		constexpr static unsigned int DEL_KEY = 46;
-
-		constexpr static unsigned int ENTER = 13;
-		constexpr static unsigned int BACKSPACE = 8;
-		constexpr static unsigned int SPACE = 32;
 
 		void handleKeyboardEvent(KEY_EVENT_RECORD);
 		void handleControlSequence(KEY_EVENT_RECORD);
@@ -81,6 +68,10 @@ namespace cedit {
 		void moveCursorHor(int);
 		void processEnter();
 		char getCharacterPressed(KEY_EVENT_RECORD, bool ctrl = false);
+		
+		//set cursor coordiates to be within screen buffer, and sets appropriately
+		//the line offsets
+		void standardizeCoords();
 
 		//mouse
 		void handleMouseEvent(MOUSE_EVENT_RECORD);
