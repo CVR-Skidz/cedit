@@ -3,8 +3,16 @@
 using namespace cedit;
 using namespace std::literals::string_literals;
 
-int main() {
-	Editor editor;
+int main(int argc, char* argv[]) {
+	//open file
+	if (argc > 1) {
+		Editor editor = Editor(argv[1]);
+		editor.start();
+	}
+	else {
+		Editor editor;
+		editor.start();
+	}
 
 	return 0;
 }
@@ -20,7 +28,15 @@ Editor::Editor() {
 	ystart = 0;
 	width = 0;
 	height = 0;
+	path = "";
+}
 
+Editor::Editor(std::string path) : Editor(){
+	readFile(path);
+	this->path = path;
+}
+
+void Editor::start() {
 	DWORD inputEventsCount = 0;
 	getConsoleSize();
 
@@ -35,6 +51,7 @@ void Editor::setConsoleMode() {
 	input = GetStdHandle(STD_INPUT_HANDLE);
 	output = GetStdHandle(STD_OUTPUT_HANDLE);
 	GetConsoleMode(input, &consoleInputMode);
+	GetConsoleCursorInfo(output, &cursor);
 
 	//disable quick edit mode
 	SetConsoleMode(input, ENABLE_EXTENDED_FLAGS);
@@ -72,23 +89,145 @@ void Editor::processInput(int nEvents) {
 	}
 }
 
+std::string Editor::getBlockingInput() {
+	DWORD statusBuffer = 0;
+	std::string in = ""s;
+
+	COORD outPos = { x, 0 };
+
+	do {
+		ReadConsoleInput(input, events, 1, &statusBuffer);
+		auto keyEvent = events[0].Event.KeyEvent;
+		auto vKey = keyEvent.wVirtualKeyCode;
+		if (keyEvent.dwControlKeyState & ~LEFT_CTRL_PRESSED) {
+			auto key = getCharacterPressed(events[0].Event.KeyEvent);
+			if (keyEvent.bKeyDown) {
+				if (key != -1) in += key;
+				else if (vKey == VK_BACK) in.erase(in.end() - 1);
+				else if (vKey == VK_DELETE) in.erase(in.end() - 1);
+			}
+		}
+
+		FillConsoleOutputCharacter(output, ' ', in.length() + 1, outPos, &statusBuffer);
+		SetConsoleCursorPosition(output, outPos);
+		std::cout << in;
+	} while (events[0].Event.KeyEvent.wVirtualKeyCode != VK_RETURN);
+
+	return in;
+}
+
+void Editor::readFile(std::string path) {
+	std::ifstream file;
+	file.open(path);
+
+	if (!file.good()) {	//error reading file
+		return;
+	}
+
+	x = 0;
+	y = 0;
+	xstart = 0;
+	ystart = 0;
+	lineCount = 0;
+	lines.clear();
+	
+	char charBuffer = 0;
+	std::string lineBuffer = ""s;
+
+	while (!file.eof()) {
+		//read line
+		while ((charBuffer = file.get()) != '\n' && !file.eof()) {
+			if (charBuffer == '\t') {
+				for (auto i = 0; i < TAB_SIZE; ++i) lineBuffer += ' ';
+			}
+			else lineBuffer += charBuffer;
+		}
+
+		lines.push_back(lineBuffer);
+		lineBuffer.clear();
+		++lineCount;
+	}
+
+	file.close();
+}
+
+void Editor::saveFile(std::string path) {
+	if (!path.length()) {
+		path = prompt("Enter file path:\n");
+	}
+
+	std::ofstream file;
+	file.open(path);
+
+	if (!file.good()) {
+		keyPressed = "ERROR SAVING: Could not write to " + path;
+		return;
+	}
+
+	for (auto line : lines) {
+		file << line << std::endl;
+	}
+
+	keyPressed = "Saved file to " + path;
+	file.close();
+}
+
+void Editor::clearScreen() {
+	DWORD columnsCleared;
+	FillConsoleOutputCharacter(output, ' ', height * width, { 0,0 }, &columnsCleared);
+	FillConsoleOutputAttribute(output, BLACKONWHITE, height * width, { 0,0 }, &columnsCleared);
+}
+
 void Editor::printLines() {
-	system("cls");
+	COORD originalPosition = { x, y };
+	cursor.bVisible = false;
+	SetConsoleCursorInfo(output, &cursor);
+	SetConsoleCursorPosition(output, {0,0});
 
 	//index of line to stop printing at
 	int bufferEndPos = lineCount <= height ? lineCount : ystart + height;
+	DWORD count; //count of any characters cleared
 
 	for (auto i = ystart; i < bufferEndPos; ++i) {
 		auto line = lines[i];
-		std::cout << line.substr(xstart, 
-			availableOutputLength(line) + 1) << std::endl;
+		std::string finalLine;
+		if (xstart >= line.length()) {
+			COORD clearPos = { 0,i };
+			FillConsoleOutputCharacter(output, ' ', width-1, clearPos, &count);
+			finalLine = ""s;
+		}
+		else {
+			finalLine = line.substr(xstart, availableOutputLength(line) + 1);
+			std::cout << finalLine;
+		}
+
+		if (screenBuffer.size() > i) {
+			screenBuffer[i] = finalLine;
+			COORD eolPos = { finalLine.length(), i };
+			SetConsoleCursorPosition(output, eolPos);
+			FillConsoleOutputCharacter(output, ' ', width - finalLine.length(), 
+				eolPos, &count);
+		}
+		else screenBuffer.push_back(finalLine); 
+
+		std::cout << std::endl;
 	}
+
+	if (screenBuffer.size() > lines.size()) {
+		auto diff = screenBuffer.size() - lines.size();
+		COORD clearPos = { 0, lines.size() };
+		DWORD columnsCleared;
+		FillConsoleOutputCharacter(output, ' ', diff * width, clearPos, &columnsCleared);
+	}
+
 	printStatus();
+	SetConsoleCursorPosition(output, originalPosition);
+	cursor.bVisible = true;
+	SetConsoleCursorInfo(output, &cursor);
 }
 
 void Editor::printStatus() {
 	COORD statusPosition = { 0, height };
-	COORD originalPosition = { x, y };
 	SetConsoleCursorPosition(output, statusPosition);
 
 	std::ostringstream status;
@@ -103,7 +242,6 @@ void Editor::printStatus() {
 	}
 
 	std::cout << finalStatusBar;
-	SetConsoleCursorPosition(output, originalPosition);
 }
 
 void Editor::getConsoleSize() {
@@ -211,8 +349,8 @@ void Editor::addLine(std::string s, int pos) {
 	}
 	else {
 		lines.push_back(s);
-		lineCount++;
 	}
+	lineCount++;
 }
 
 void Editor::concatLine(bool before) {
@@ -280,9 +418,17 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 	if (keyEvent.dwControlKeyState & LEFT_CTRL_PRESSED) {
 		auto key = getCharacterPressed(keyEvent, true);
 
-		if (key > 0) {
-			keyPressed = "ctrl + ";
-			keyPressed += key;
+		keyPressed = "ctrl + ";
+		keyPressed += key;
+		
+		switch (key) {
+			case 'S':
+				saveFile();
+				break;
+			case 'O':
+				auto path = prompt("Enter file path:\n");
+				readFile(path);
+				break;
 		}
 	}
 	else {
@@ -448,7 +594,7 @@ void Editor::processEnter() {
 	int distanceToEnd = newLine.length() - x - xstart;
 	newLine = newLine.substr(x + xstart, distanceToEnd);
 	std::string& currentL = lines[y + ystart];
-	currentL = currentL.erase(x + xstart, currentL.length() - distanceToEnd);
+	currentL = currentL.erase(x + xstart, currentL.length());
 
 	//add new line;
 	addLine(newLine, y + ystart + 1);
@@ -498,4 +644,16 @@ void Editor::standardizeCoords() {
 	else if (yoverflow < 0) {
 		ystart = 0;
 	}
+}
+
+std::string Editor::prompt(std::string message) {
+	x = message.length();
+
+	clearScreen();
+	SetConsoleCursorPosition(output, { 0,0 });
+	std::cout << message;
+	auto out = getBlockingInput();
+	clearScreen();
+
+	return out;
 }

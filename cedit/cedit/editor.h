@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <windows.h>
 #include <sstream>
 
@@ -10,6 +11,9 @@ namespace cedit {
 	{
 	public:
 		Editor();
+		Editor(std::string);
+
+		void start();
 		
 	private:
 		constexpr static unsigned int EVENT_STORAGE_LENGTH = 64;
@@ -20,6 +24,7 @@ namespace cedit {
 		bool session;
 		HANDLE input;
 		HANDLE output;
+		CONSOLE_CURSOR_INFO cursor;
 		DWORD consoleInputMode; //mode of console before launching
 		INPUT_RECORD events[EVENT_STORAGE_LENGTH];
 
@@ -31,6 +36,8 @@ namespace cedit {
 		unsigned int width; //width of console screen buffer
 		unsigned int height;  //height of console screen buffer
 		std::vector<std::string> lines;
+		std::vector<std::string> screenBuffer;
+		std::string path;
 
 		//status bar
 		std::string keyPressed;
@@ -38,7 +45,11 @@ namespace cedit {
 		void setConsoleMode();
 		void getConsoleSize();
 		void processInput(int);
+		std::string getBlockingInput();
+		void readFile(std::string);
+		void saveFile(std::string path = "");
 		
+		void clearScreen();
 		void printLines();
 		void printStatus();
 		void insertCharacter(char);
@@ -73,16 +84,10 @@ namespace cedit {
 		//the line offsets
 		void standardizeCoords();
 
+		//displays user prompt, and returns input
+		std::string prompt(std::string);
+
 		//mouse
 		void handleMouseEvent(MOUSE_EVENT_RECORD);
-		
-		//debug
-		void fillLines() {
-			for (auto i = 0; i < 20; ++i) {
-				lines.push_back("Test" + std::to_string(i));
-			}
-			lines.push_back("TestTestTestTestTestTestTestTestTestTestTestTestTestTestTest");
-			lineCount = lines.size();
-		}
 	};
 }
