@@ -1,4 +1,5 @@
 #include "editor.h"
+#include "prompt.h"
 
 using namespace cedit;
 using namespace std::literals::string_literals;
@@ -74,46 +75,8 @@ void Editor::processInput(int nEvents) {
 				getConsoleSize();
 				printLines();
 				break;
-
-			case FOCUS_EVENT:
-				keyPressed = "window focus event"s;
-				break;
-
-			case MENU_EVENT:
-				keyPressed = "menu event"s;
-				break;
-
-			default:
-				keyPressed = "unhandled input event"s;
 		}
 	}
-}
-
-std::string Editor::getBlockingInput() {
-	DWORD statusBuffer = 0;
-	std::string in = ""s;
-
-	COORD outPos = { x, 0 };
-
-	do {
-		ReadConsoleInput(input, events, 1, &statusBuffer);
-		auto keyEvent = events[0].Event.KeyEvent;
-		auto vKey = keyEvent.wVirtualKeyCode;
-		if (keyEvent.dwControlKeyState & ~LEFT_CTRL_PRESSED) {
-			auto key = getCharacterPressed(events[0].Event.KeyEvent);
-			if (keyEvent.bKeyDown) {
-				if (key != -1) in += key;
-				else if (vKey == VK_BACK) in.erase(in.end() - 1);
-				else if (vKey == VK_DELETE) in.erase(in.end() - 1);
-			}
-		}
-
-		FillConsoleOutputCharacter(output, ' ', in.length() + 1, outPos, &statusBuffer);
-		SetConsoleCursorPosition(output, outPos);
-		std::cout << in;
-	} while (events[0].Event.KeyEvent.wVirtualKeyCode != VK_RETURN);
-
-	return in;
 }
 
 void Editor::readFile(std::string path) {
@@ -121,6 +84,7 @@ void Editor::readFile(std::string path) {
 	file.open(path);
 
 	if (!file.good()) {	//error reading file
+		statusMessage = "Could not read from " + path;
 		return;
 	}
 
@@ -153,14 +117,14 @@ void Editor::readFile(std::string path) {
 
 void Editor::saveFile(std::string path) {
 	if (!path.length()) {
-		path = prompt("Enter file path:\n");
+		path = prompt("Enter file path:");
 	}
 
 	std::ofstream file;
 	file.open(path);
 
 	if (!file.good()) {
-		keyPressed = "ERROR SAVING: Could not write to " + path;
+		statusMessage = "ERROR SAVING: Could not write to " + path;
 		return;
 	}
 
@@ -168,7 +132,7 @@ void Editor::saveFile(std::string path) {
 		file << line << std::endl;
 	}
 
-	keyPressed = "Saved file to " + path;
+	statusMessage = "Saved file to " + path;
 	file.close();
 }
 
@@ -231,8 +195,8 @@ void Editor::printStatus() {
 	SetConsoleCursorPosition(output, statusPosition);
 
 	std::ostringstream status;
-	status << "Recieved: " << keyPressed << "\t" << x << "," << y << "\tStart: "
-		<< xstart << "," << ystart << "\tSize: " << width << "," << height;
+	status << statusMessage << "\t" << x << "," << y << " Start: "
+		<< xstart << "," << ystart << " Lines: " << lineCount;
 
 	auto finalStatusBar = convertWhitespace(status.str());
 	
@@ -409,8 +373,6 @@ void Editor::handleKeyboardEvent(KEY_EVENT_RECORD keyEvent) {
 	}
 	else if (keyEvent.bKeyDown) {
 		insertCharacter(key);
-		keyPressed = std::string();
-		keyPressed += key;
 	}
 }
 
@@ -418,15 +380,15 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 	if (keyEvent.dwControlKeyState & LEFT_CTRL_PRESSED) {
 		auto key = getCharacterPressed(keyEvent, true);
 
-		keyPressed = "ctrl + ";
-		keyPressed += key;
+		statusMessage = "ctrl + ";
+		statusMessage += key;
 		
 		switch (key) {
 			case 'S':
 				saveFile();
 				break;
 			case 'O':
-				auto path = prompt("Enter file path:\n");
+				auto path = prompt("Enter file path:");
 				readFile(path);
 				break;
 		}
@@ -440,22 +402,18 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 	if (keyEvent.bKeyDown) {
 		switch (keyEvent.wVirtualKeyCode) {
 			case VK_RIGHT:
-				keyPressed = "right arrow";
 				moveCursorHor(1);
 				break;
 
 			case VK_LEFT:
-				keyPressed = "left arrow";
 				moveCursorHor(-1);
 				break;
 
 			case VK_DOWN:
-				keyPressed = "down arrow";
 				moveCursorVert(1);
 				break;
 
 			case VK_UP:
-				keyPressed = "up arrow";
 				moveCursorVert(-1);
 				break;
 
@@ -484,10 +442,6 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 				
 				x = 0;
 				standardizeCoords();
-				break;
-
-			default:
-				keyPressed = std::to_string(keyEvent.wVirtualKeyCode);
 				break;
 		}
 	}
@@ -647,13 +601,7 @@ void Editor::standardizeCoords() {
 }
 
 std::string Editor::prompt(std::string message) {
-	x = message.length();
-
+	Prompt prompt = Prompt({ 0,0 }, { (SHORT)width, (SHORT)height }, input, output, message);
 	clearScreen();
-	SetConsoleCursorPosition(output, { 0,0 });
-	std::cout << message;
-	auto out = getBlockingInput();
-	clearScreen();
-
-	return out;
+	return prompt.response();
 }

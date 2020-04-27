@@ -10,6 +10,12 @@ namespace cedit {
 	class Editor
 	{
 	public:
+		//keyboard
+		constexpr static unsigned int PRINTABLE_START = '!';
+		constexpr static unsigned int PRINTABLE_END = '~';
+			//offset of ACII keycode after ctrl is pressed
+			constexpr static unsigned int CTRL_KEY_OFFSET = 64;
+
 		Editor();
 		Editor(std::string);
 
@@ -40,12 +46,11 @@ namespace cedit {
 		std::string path;
 
 		//status bar
-		std::string keyPressed;
+		std::string statusMessage;
 		
 		void setConsoleMode();
 		void getConsoleSize();
 		void processInput(int);
-		std::string getBlockingInput();
 		void readFile(std::string);
 		void saveFile(std::string path = "");
 		
@@ -61,13 +66,7 @@ namespace cedit {
 		int availableOutputLength(std::string);
 		int absoluteOutputLength(std::string);
 		int realLength(std::string);
-		std::string currentLine();
-		
-		//keyboard
-		constexpr static unsigned int PRINTABLE_START = '!';
-		constexpr static unsigned int PRINTABLE_END = '~';
-			//offset of ACII keycode after ctrl is pressed
-			constexpr static unsigned int CTRL_KEY_OFFSET = 64; 
+		std::string currentLine(); 
 
 		void handleKeyboardEvent(KEY_EVENT_RECORD);
 		void handleControlSequence(KEY_EVENT_RECORD);

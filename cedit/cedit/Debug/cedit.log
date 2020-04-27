@@ -1,33 +1,32 @@
 ﻿  editor.cpp
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(96,19): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(182,29): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(182,32): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(188,31): warning C4018: '<=': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(191,26): warning C4018: '<': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(195,25): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(206,37): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(206,43): warning C4267: 'initializing': conversion from 'size_t' to 'SHORT', possible loss of data
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(206,41): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(218,35): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(218,38): warning C4267: 'initializing': conversion from 'size_t' to 'SHORT', possible loss of data
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(230,30): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(254,32): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(254,44): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(292,10): warning C4018: '>': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(301,37): warning C4018: '>': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(330,8): warning C4018: '>': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(341,10): warning C4018: '<': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(347,22): warning C4018: '<': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(483,11): warning C4018: '>': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(540,8): warning C4018: '>': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(556,18): warning C4018: '>': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(558,23): warning C4018: '<': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(146,29): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(146,32): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(152,31): warning C4018: '<=': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(155,26): warning C4018: '<': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(159,25): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(170,37): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(170,43): warning C4267: 'initializing': conversion from 'size_t' to 'SHORT', possible loss of data
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(170,41): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(182,35): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(182,38): warning C4267: 'initializing': conversion from 'size_t' to 'SHORT', possible loss of data
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(194,30): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(218,32): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(218,44): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(256,10): warning C4018: '>': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(265,37): warning C4018: '>': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(294,8): warning C4018: '>': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(305,10): warning C4018: '<': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(311,22): warning C4018: '<': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(441,11): warning C4018: '>': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(494,8): warning C4018: '>': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(510,18): warning C4018: '>': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(512,23): warning C4018: '<': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(518,16): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(518,19): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(535,18): warning C4018: '>': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(537,23): warning C4018: '<': signed/unsigned mismatch
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(542,16): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(542,19): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
 D:\devel\src\c\cedit\cedit\cedit\editor.cpp(564,16): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(564,19): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(581,18): warning C4018: '>': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(583,23): warning C4018: '<': signed/unsigned mismatch
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(588,16): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(588,19): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(610,16): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
-D:\devel\src\c\cedit\cedit\cedit\editor.cpp(610,18): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
+D:\devel\src\c\cedit\cedit\cedit\editor.cpp(564,18): warning C4838: conversion from 'unsigned int' to 'SHORT' requires a narrowing conversion
   cedit.vcxproj -> D:\devel\src\c\cedit\cedit\Debug\cedit.exe

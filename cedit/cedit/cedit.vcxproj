@@ -142,9 +142,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="editor.cpp" />
+    <ClCompile Include="prompt.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="editor.h" />
+    <ClInclude Include="prompt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
