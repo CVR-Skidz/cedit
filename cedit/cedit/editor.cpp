@@ -39,9 +39,9 @@ Editor::Editor(std::string path) : Editor(){
 
 void Editor::start() {
 	DWORD inputEventsCount = 0;
-	getConsoleSize();
 
 	while (session) {
+		getConsoleSize();
 		ReadConsoleInput(input, events, EVENT_STORAGE_LENGTH, &inputEventsCount);
 		processInput(inputEventsCount);
 		printLines();
@@ -166,8 +166,8 @@ void Editor::printLines() {
 		}
 
 		if (screenBuffer.size() > i) {
-			screenBuffer[i] = finalLine;
-			COORD eolPos = { finalLine.length(), i };
+			screenBuffer[i - ystart] = finalLine;
+			COORD eolPos = { finalLine.length(), i-ystart };
 			SetConsoleCursorPosition(output, eolPos);
 			FillConsoleOutputCharacter(output, ' ', width - finalLine.length(), 
 				eolPos, &count);
@@ -177,6 +177,7 @@ void Editor::printLines() {
 		std::cout << std::endl;
 	}
 
+	//clear empty lines at end of file
 	if (screenBuffer.size() > lines.size()) {
 		auto diff = screenBuffer.size() - lines.size();
 		COORD clearPos = { 0, lines.size() };
@@ -195,8 +196,8 @@ void Editor::printStatus() {
 	SetConsoleCursorPosition(output, statusPosition);
 
 	std::ostringstream status;
-	status << statusMessage << "\t" << x << "," << y << " Start: "
-		<< xstart << "," << ystart << " Lines: " << lineCount;
+	status << statusMessage << "\t" << x +xstart << "," << y + ystart << " " <<
+		width << "," << height << " Lines: " << lineCount;
 
 	auto finalStatusBar = convertWhitespace(status.str());
 	
@@ -212,10 +213,16 @@ void Editor::getConsoleSize() {
 	CONSOLE_SCREEN_BUFFER_INFO screen;
 	GetConsoleScreenBufferInfo(output, &screen);
 
+	if (width != screen.dwSize.X - 1|| height != screen.dwSize.Y - 1) {
+		DWORD statusErased;
+		SetConsoleCursorPosition(output, { 0, (short)height });
+		FillConsoleOutputCharacter(output, ' ', width, { 0, (short)height }, &statusErased);
+	}
+
 	width = screen.srWindow.Right - screen.srWindow.Left;
 	height = screen.srWindow.Bottom - screen.srWindow.Top;
 
-	COORD newBufferSize = { width + 1, height + 1 };
+	COORD newBufferSize = { width+1, height+1 };
 	SetConsoleScreenBufferSize(output, newBufferSize);
 }
 
@@ -504,8 +511,11 @@ void Editor::moveCursorVert(int amount) {
 		newpos = 0;
 		if (ystart) --ystart;
 	}
-	else if (newpos > lineCount - 1) { //cant move passed end of file
-		newpos = (lineCount ? lineCount - 1 : 0);
+	else if (newpos + ystart > lineCount - 1) { //cant move passed end of file
+		if (lineCount) {
+			newpos = (lineCount - 1 > height - 1 ? height - 1 : lineCount - 1);
+		}
+		else newpos = 0;
 	}
 	else if (newpos > height - 1) { //if cursor going off bottom screen, adjusted for status bar
 		newpos = height - 1;
