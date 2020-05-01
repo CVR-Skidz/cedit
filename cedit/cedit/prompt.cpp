@@ -45,6 +45,10 @@ void Prompt::pollInput() {
 				buffer.erase(buffer.end() - 1);
 				if (xstart) --xstart;
 			}
+			else if (vkey == VK_ESCAPE) { 
+				buffer = ""s;
+				key = VK_RETURN;
+			}
 		}
 	}
 }

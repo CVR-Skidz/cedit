@@ -1,9 +1,9 @@
 + Input key (cedit main)
 |
 +-> Process key (cedit editor.process)
-	|
-	+-> Return corresponding object 
-	|
+        |
+        +-> Return corresponding object 
+        |
   is control object?
     |
   +-+---- no -------> Print object (result.print)
@@ -11,3 +11,5 @@
  yes
   |
   +  Run control object (result.execute)
+
+

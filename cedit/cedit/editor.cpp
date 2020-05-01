@@ -39,12 +39,12 @@ Editor::Editor(std::string path) : Editor(){
 
 void Editor::start() {
 	DWORD inputEventsCount = 0;
-
+	
 	while (session) {
 		getConsoleSize();
+		printLines();
 		ReadConsoleInput(input, events, EVENT_STORAGE_LENGTH, &inputEventsCount);
 		processInput(inputEventsCount);
-		printLines();
 	}
 }
 
@@ -84,10 +84,11 @@ void Editor::readFile(std::string path) {
 	file.open(path);
 
 	if (!file.good()) {	//error reading file
-		statusMessage = "Could not read from " + path;
+		statusMessage = "Could not read from \"" + path + '"';
 		return;
 	}
 
+	this->path = path;
 	x = 0;
 	y = 0;
 	xstart = 0;
@@ -112,19 +113,21 @@ void Editor::readFile(std::string path) {
 		++lineCount;
 	}
 
+	statusMessage = this->path;
 	file.close();
 }
 
 void Editor::saveFile(std::string path) {
 	if (!path.length()) {
 		path = prompt("Enter file path:");
+		this->path = path;
 	}
 
 	std::ofstream file;
 	file.open(path);
 
 	if (!file.good()) {
-		statusMessage = "ERROR SAVING: Could not write to " + path;
+		statusMessage = "Could not write to \"" + path + '"';
 		return;
 	}
 
@@ -194,19 +197,24 @@ void Editor::printLines() {
 void Editor::printStatus() {
 	COORD statusPosition = { 0, height };
 	SetConsoleCursorPosition(output, statusPosition);
+	SetConsoleTextAttribute(output, BACKGROUND_BLUE | BACKGROUND_GREEN);
 
 	std::ostringstream status;
-	status << statusMessage << "\t" << x +xstart << "," << y + ystart << " " <<
+	status << statusMessage << " " << x +xstart << "," << y + ystart << " " <<
 		width << "," << height << " Lines: " << lineCount;
 
 	auto finalStatusBar = convertWhitespace(status.str());
+	auto displayLength = absoluteOutputLength(finalStatusBar);
 	
 	//check if the status bar can not fit in buffer
-	if (absoluteOutputLength(finalStatusBar) == width - 1) {
+	if (displayLength == width) {
 		finalStatusBar = finalStatusBar.substr(0, width - 1);
+		displayLength = width - 1;
 	}
 
 	std::cout << finalStatusBar;
+	for (auto i = 0; i <= width - displayLength; ++i) { std::cout << ' '; }
+	SetConsoleTextAttribute(output, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
 }
 
 void Editor::getConsoleSize() {
@@ -386,17 +394,23 @@ void Editor::handleKeyboardEvent(KEY_EVENT_RECORD keyEvent) {
 void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 	if (keyEvent.dwControlKeyState & LEFT_CTRL_PRESSED) {
 		auto key = getCharacterPressed(keyEvent, true);
-
-		statusMessage = "ctrl + ";
-		statusMessage += key;
 		
 		switch (key) {
 			case 'S':
-				saveFile();
+				saveFile(path);
 				break;
 			case 'O':
-				auto path = prompt("Enter file path:");
-				readFile(path);
+				readFile(prompt("Enter file path:"));
+				break;
+			case 'Q':
+				system("cls");
+				session = false;
+				break;
+			case 'N':
+				path = ""s;
+				lineCount = 0;
+				lines.clear();
+				x = 0; y = 0;
 				break;
 		}
 	}
@@ -429,13 +443,18 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 				xstart = 0;
 				break;
 
-			case VK_END:
+			case VK_END: {
 				x = currentLine().length();
+				//standardize x axis
+				auto yBuffer = ystart;
 				standardizeCoords();
+				ystart = yBuffer;
 				break;
+			}
 
 			case VK_PRIOR:	//page up
-				if (y >= height - 1) y -= (height - 1 - ystart);
+				if (y >= height - 1) y -= (height - 1);
+				else if (ystart) ystart -= (height - 1);
 				else y = 0;
 
 				x = 0;
@@ -590,12 +609,15 @@ char Editor::getCharacterPressed(KEY_EVENT_RECORD keyEvent, bool ctrl) {
 }
 
 void Editor::standardizeCoords() {
+	auto lineLength = currentLine().length();
 	int xoverflow = x - width;
 	int yoverflow = y - (height - 1);
 
 	if (xoverflow > 0) {
 		x = width;
-		xstart = xoverflow;
+		auto newXOffset = xstart + xoverflow;
+		if (x + newXOffset < lineLength) xstart += xoverflow;
+		else xstart = lineLength - x - 1;
 	}
 	else if (xoverflow < 0) {
 		xstart = 0;
@@ -603,15 +625,17 @@ void Editor::standardizeCoords() {
 
 	if (yoverflow > 0) {
 		y = height - 1;
-		ystart = yoverflow;
+		auto newYOffset = ystart + yoverflow;
+		if (y + newYOffset < lineCount) ystart += yoverflow;
+		else ystart = lineCount - y - 1;
 	}
-	else if (yoverflow < 0) {
+	/*else if (yoverflow < 0) {
 		ystart = 0;
-	}
+	}*/
 }
 
 std::string Editor::prompt(std::string message) {
-	Prompt prompt = Prompt({ 0,0 }, { (SHORT)width, (SHORT)height }, input, output, message);
+	Prompt prompt = Prompt({ 0,(SHORT)height-1 }, { (SHORT)width, 1 }, input, output, message);
 	clearScreen();
 	return prompt.response();
 }
