@@ -152,7 +152,13 @@ void Editor::printLines() {
 	SetConsoleCursorPosition(output, {0,0});
 
 	//index of line to stop printing at
-	int bufferEndPos = lineCount <= height ? lineCount : ystart + height;
+	int bufferEndPos;
+	if (lineCount - ystart < height) { //if screen position has reached eof
+		bufferEndPos = lineCount;
+	}
+	else {
+		bufferEndPos = height + ystart;
+	}
 	DWORD count; //count of any characters cleared
 
 	for (auto i = ystart; i < bufferEndPos; ++i) {
@@ -181,9 +187,9 @@ void Editor::printLines() {
 	}
 
 	//clear empty lines at end of file
-	if (screenBuffer.size() > lines.size()) {
-		auto diff = screenBuffer.size() - lines.size();
-		COORD clearPos = { 0, lines.size() };
+	if (bufferEndPos == lineCount) {
+		auto diff = height - bufferEndPos + ystart;
+		COORD clearPos = { 0, bufferEndPos - ystart};
 		DWORD columnsCleared;
 		FillConsoleOutputCharacter(output, ' ', diff * width, clearPos, &columnsCleared);
 	}
@@ -462,12 +468,14 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 				break;
 
 			case VK_NEXT:	//page down
-				y += height - 1;
+				if (y + ystart + height - 1 < lineCount) {
+					ystart += height - 1;
+				}
+				else {
+					y = lineCount - 1 - ystart;
+				}
 
-				if (y > lineCount - 1) y = lineCount - 1;
-				
 				x = 0;
-				standardizeCoords();
 				break;
 		}
 	}
@@ -532,7 +540,7 @@ void Editor::moveCursorVert(int amount) {
 	}
 	else if (newpos + ystart > lineCount - 1) { //cant move passed end of file
 		if (lineCount) {
-			newpos = (lineCount - 1 > height - 1 ? height - 1 : lineCount - 1);
+			newpos = (lineCount - 1 - ystart > height - 1 ? height - 1 : y);
 		}
 		else newpos = 0;
 	}

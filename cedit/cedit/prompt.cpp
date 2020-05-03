@@ -35,7 +35,7 @@ void Prompt::pollInput() {
 	auto vkey = keyEvent.wVirtualKeyCode;
 	key = keyEvent.uChar.AsciiChar;
 
-	if (keyEvent.dwControlKeyState & ~LEFT_CTRL_PRESSED) {
+	if (!(keyEvent.dwControlKeyState & LEFT_CTRL_PRESSED)) {
 		bool isPrintable = key >= Editor::PRINTABLE_START && key <= Editor::PRINTABLE_END;
 		if (keyEvent.bKeyDown) {
 			if (isPrintable) {

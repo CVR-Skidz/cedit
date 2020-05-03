@@ -11,5 +11,3 @@
  yes
   |
   +  Run control object (result.execute)
-
-
