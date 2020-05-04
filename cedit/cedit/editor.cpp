@@ -203,7 +203,6 @@ void Editor::printLines() {
 void Editor::printStatus() {
 	COORD statusPosition = { 0, height };
 	SetConsoleCursorPosition(output, statusPosition);
-	SetConsoleTextAttribute(output, BACKGROUND_BLUE | BACKGROUND_GREEN);
 
 	std::ostringstream status;
 	status << statusMessage << " " << x +xstart << "," << y + ystart << " " <<
@@ -218,23 +217,28 @@ void Editor::printStatus() {
 		displayLength = width - 1;
 	}
 
+	SetConsoleTextAttribute(output, HIGHLIGHT);
 	std::cout << finalStatusBar;
 	for (auto i = 0; i <= width - displayLength; ++i) { std::cout << ' '; }
-	SetConsoleTextAttribute(output, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
+	SetConsoleTextAttribute(output, BODY_STYLE);
 }
 
 void Editor::getConsoleSize() {
 	CONSOLE_SCREEN_BUFFER_INFO screen;
 	GetConsoleScreenBufferInfo(output, &screen);
 
-	if (width != screen.dwSize.X - 1|| height != screen.dwSize.Y - 1) {
-		DWORD statusErased;
+	auto newScreenWidth = screen.srWindow.Right - screen.srWindow.Left;
+	auto newScreenHeight = screen.srWindow.Bottom - screen.srWindow.Top;
+
+	if (height < newScreenHeight) {
 		SetConsoleCursorPosition(output, { 0, (short)height });
-		FillConsoleOutputCharacter(output, ' ', width, { 0, (short)height }, &statusErased);
+		for (auto i = 0; i < newScreenHeight - height + 1; ++i) {
+			for (auto j = 0; j < newScreenWidth + 1; ++j) { std::cout << ' '; }
+		}
 	}
 
-	width = screen.srWindow.Right - screen.srWindow.Left;
-	height = screen.srWindow.Bottom - screen.srWindow.Top;
+	width = newScreenWidth;
+	height = newScreenHeight;
 
 	COORD newBufferSize = { width+1, height+1 };
 	SetConsoleScreenBufferSize(output, newBufferSize);
@@ -417,6 +421,7 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 				lineCount = 0;
 				lines.clear();
 				x = 0; y = 0;
+				xstart = 0; ystart = 0;
 				break;
 		}
 	}

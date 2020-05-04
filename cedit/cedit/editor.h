@@ -15,6 +15,10 @@ namespace cedit {
 		constexpr static unsigned int PRINTABLE_END = '~';
 			//offset of ACII keycode after ctrl is pressed
 			constexpr static unsigned int CTRL_KEY_OFFSET = 64;
+			//text editor body colors
+			constexpr static WORD BODY_STYLE = FOREGROUND_BLUE | FOREGROUND_GREEN 
+				| FOREGROUND_RED;
+			constexpr static WORD HIGHLIGHT = BACKGROUND_BLUE | BACKGROUND_GREEN;
 
 		Editor();
 		Editor(std::string);
