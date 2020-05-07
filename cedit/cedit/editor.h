@@ -16,9 +16,10 @@ namespace cedit {
 			//offset of ACII keycode after ctrl is pressed
 			constexpr static unsigned int CTRL_KEY_OFFSET = 64;
 			//text editor body colors
-			constexpr static WORD BODY_STYLE = FOREGROUND_BLUE | FOREGROUND_GREEN 
-				| FOREGROUND_RED;
-			constexpr static WORD HIGHLIGHT = BACKGROUND_BLUE | BACKGROUND_GREEN;
+			constexpr static WORD BODY_STYLE = 
+				FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED;
+			constexpr static WORD HIGHLIGHT = 
+				BACKGROUND_BLUE | BACKGROUND_GREEN;
 
 		Editor();
 		Editor(std::string);
@@ -28,7 +29,7 @@ namespace cedit {
 	private:
 		constexpr static unsigned int EVENT_STORAGE_LENGTH = 64;
 		constexpr static unsigned int TAB_SIZE = 8;
-		constexpr static DWORD CONSOLE_MODE =
+		constexpr static DWORD CONSOLE_MODE = 
 			ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT;
 
 		bool session;
@@ -39,12 +40,12 @@ namespace cedit {
 		INPUT_RECORD events[EVENT_STORAGE_LENGTH];
 
 		int lineCount;
-		unsigned int y; //line of cursor
-		unsigned int x; //column of cursor 
-		unsigned int xstart; //starting index in line in editor
-		unsigned int ystart; //starting index in line storage in editor
-		unsigned int width; //width of console screen buffer
-		unsigned int height;  //height of console screen buffer
+		short y; //line of cursor
+		short x; //column of cursor 
+		int xstart; //starting index in line in editor
+		int ystart; //starting index in line storage in editor
+		int width; //width of console screen buffer
+		int height;  //height of console screen buffer
 		std::vector<std::string> lines;
 		std::vector<std::string> screenBuffer;
 		std::string path;
@@ -87,6 +88,8 @@ namespace cedit {
 		//the line offsets
 		void standardizeCoords();
 
+
+		void clearStatus();
 		//displays user prompt, and returns input
 		std::string prompt(std::string);
 

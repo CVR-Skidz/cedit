@@ -19,8 +19,6 @@ int main(int argc, char* argv[]) {
 }
 
 Editor::Editor() {
-	setConsoleMode();
-
 	session = true;
 	lineCount = 0;
 	y = 0;
@@ -38,6 +36,7 @@ Editor::Editor(std::string path) : Editor(){
 }
 
 void Editor::start() {
+	setConsoleMode();
 	DWORD inputEventsCount = 0;
 	
 	while (session) {
@@ -62,6 +61,7 @@ void Editor::setConsoleMode() {
 
 void Editor::processInput(int nEvents) {
 	for (auto i = 0; i < nEvents; ++i) {
+		statusMessage = std::to_string(events[i].EventType);
 		switch (events[i].EventType) {
 			case KEY_EVENT:
 				handleKeyboardEvent(events[i].Event.KeyEvent);
@@ -69,11 +69,6 @@ void Editor::processInput(int nEvents) {
 
 			case MOUSE_EVENT:
 				handleMouseEvent(events[i].Event.MouseEvent);
-				break;
-
-			case WINDOW_BUFFER_SIZE_EVENT:
-				getConsoleSize();
-				printLines();
 				break;
 		}
 	}
@@ -165,7 +160,7 @@ void Editor::printLines() {
 		auto line = lines[i];
 		std::string finalLine;
 		if (xstart >= line.length()) {
-			COORD clearPos = { 0,i };
+			COORD clearPos = { 0, (short)i };
 			FillConsoleOutputCharacter(output, ' ', width-1, clearPos, &count);
 			finalLine = ""s;
 		}
@@ -176,9 +171,9 @@ void Editor::printLines() {
 
 		if (screenBuffer.size() > i) {
 			screenBuffer[i - ystart] = finalLine;
-			COORD eolPos = { finalLine.length(), i-ystart };
+			COORD eolPos = { (short)(finalLine.length()), (short)(i-ystart) };
 			SetConsoleCursorPosition(output, eolPos);
-			FillConsoleOutputCharacter(output, ' ', width - finalLine.length(), 
+			FillConsoleOutputCharacter(output, ' ', width - (DWORD)(finalLine.length()), 
 				eolPos, &count);
 		}
 		else screenBuffer.push_back(finalLine); 
@@ -189,7 +184,7 @@ void Editor::printLines() {
 	//clear empty lines at end of file
 	if (bufferEndPos == lineCount) {
 		auto diff = height - bufferEndPos + ystart;
-		COORD clearPos = { 0, bufferEndPos - ystart};
+		COORD clearPos = { 0, (short)(bufferEndPos - ystart)};
 		DWORD columnsCleared;
 		FillConsoleOutputCharacter(output, ' ', diff * width, clearPos, &columnsCleared);
 	}
@@ -201,7 +196,7 @@ void Editor::printLines() {
 }
 
 void Editor::printStatus() {
-	COORD statusPosition = { 0, height };
+	COORD statusPosition = { 0, (short)height };
 	SetConsoleCursorPosition(output, statusPosition);
 
 	std::ostringstream status;
@@ -230,17 +225,14 @@ void Editor::getConsoleSize() {
 	auto newScreenWidth = screen.srWindow.Right - screen.srWindow.Left;
 	auto newScreenHeight = screen.srWindow.Bottom - screen.srWindow.Top;
 
-	if (height < newScreenHeight) {
-		SetConsoleCursorPosition(output, { 0, (short)height });
-		for (auto i = 0; i < newScreenHeight - height + 1; ++i) {
-			for (auto j = 0; j < newScreenWidth + 1; ++j) { std::cout << ' '; }
-		}
+	if (height != newScreenHeight || width != newScreenWidth) {
+		system("cls");
 	}
 
 	width = newScreenWidth;
 	height = newScreenHeight;
 
-	COORD newBufferSize = { width+1, height+1 };
+	COORD newBufferSize = { (short)width+1, (short)height+1 };
 	SetConsoleScreenBufferSize(output, newBufferSize);
 }
 
@@ -296,7 +288,7 @@ std::string Editor::currentLine() {
 }
 
 int Editor::realLength(std::string s) {
-	int lineLength = s.length();
+	int lineLength = (int)s.length();
 
 	for (auto i : s) {
 		if (i == '\t') {
@@ -314,13 +306,13 @@ void Editor::insertCharacter(char c) {
 		addLine("");
 	}
 
-	int lineLength = lines[y + ystart].length();
+	int lineLength = (int)lines[(int)y + ystart].length();
 	 
 	if (x > lineLength) {
-		lines[y + ystart] += c;
+		lines[(int)y + ystart] += c;
 	}
 	else {
-		lines[y + ystart].insert(x + xstart, 1, c);
+		lines[(int)y + ystart].insert((int)x + xstart, 1, c);
 	}
 
 	moveCursorHor(1);
@@ -344,7 +336,7 @@ void Editor::addLine(std::string s, int pos) {
 
 void Editor::concatLine(bool before) {
 	int lineIndex = before ? y + ystart - 1 : y + ystart;
-	int appendPoint = lines[lineIndex].length();
+	int appendPoint = (int)lines[lineIndex].length();
 
 	lines[lineIndex] += lines[lineIndex + 1];
 	lines.erase(lines.begin() + lineIndex + 1);
@@ -360,33 +352,20 @@ void Editor::concatLine(bool before) {
 }
 
 void Editor::handleMouseEvent(MOUSE_EVENT_RECORD mouseEvent) {
-	/*switch (mouseEvent.dwEventFlags) {
+	switch (mouseEvent.dwEventFlags) {
 		case 0: 
 			if (mouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED) {
-				std::cout << "[left click]" << std::endl;
+				//stub
 			}
 			else if (mouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED) {
-				std::cout << "[right click]" << std::endl;
+				//stub
 			}
 			break;
 
 		case MOUSE_WHEELED:
-			std::cout << "[scrolling]" << std::endl;
+			statusMessage = std::to_string(mouseEvent.dwButtonState);
 			break;
-
-		case MOUSE_MOVED:
-			COORD pos = mouseEvent.dwMousePosition;
-			std::cout << pos.X << "," << pos.Y << std::endl;
-			break;
-
-		case MOUSE_HWHEELED:
-			std::cout << "[horizontal scrolling]" << std::endl;
-			break;
-
-		case DOUBLE_CLICK:
-			std::cout << "[double click]" << std::endl;
-			break;
-	}*/
+	}
 }
 
 void Editor::handleKeyboardEvent(KEY_EVENT_RECORD keyEvent) {
@@ -455,7 +434,7 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 				break;
 
 			case VK_END: {
-				x = currentLine().length();
+				x = (short)currentLine().length();
 				//standardize x axis
 				auto yBuffer = ystart;
 				standardizeCoords();
@@ -528,7 +507,7 @@ void Editor::handleSpecialCharacter(KEY_EVENT_RECORD keyEvent) {
 }
 
 void Editor::snapCursorToLine() {
-	int lineLength = currentLine().length();
+	int lineLength = (int)currentLine().length();
 
 	if (x > lineLength) {
 		x = lineLength;
@@ -587,7 +566,7 @@ void Editor::moveCursorHor(int amount) {
 
 void Editor::processEnter() {
 	std::string newLine = currentLine();
-	int distanceToEnd = newLine.length() - x - xstart;
+	int distanceToEnd = (int)newLine.length() - x - xstart;
 	newLine = newLine.substr(x + xstart, distanceToEnd);
 	std::string& currentL = lines[y + ystart];
 	currentL = currentL.erase(x + xstart, currentL.length());
@@ -622,14 +601,14 @@ char Editor::getCharacterPressed(KEY_EVENT_RECORD keyEvent, bool ctrl) {
 }
 
 void Editor::standardizeCoords() {
-	auto lineLength = currentLine().length();
+	int lineLength = (int)currentLine().length();
 	int xoverflow = x - width;
 	int yoverflow = y - (height - 1);
 
 	if (xoverflow > 0) {
 		x = width;
 		auto newXOffset = xstart + xoverflow;
-		if (x + newXOffset < lineLength) xstart += xoverflow;
+		if ((int)x + newXOffset < lineLength) xstart += xoverflow;
 		else xstart = lineLength - x - 1;
 	}
 	else if (xoverflow < 0) {
@@ -645,6 +624,10 @@ void Editor::standardizeCoords() {
 	/*else if (yoverflow < 0) {
 		ystart = 0;
 	}*/
+}
+
+void Editor::clearStatus() {
+	//SetConsoleCursorPosition(output, { (short)0, (short)height });
 }
 
 std::string Editor::prompt(std::string message) {
