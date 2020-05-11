@@ -5,6 +5,7 @@
 #include <fstream>
 #include <windows.h>
 #include <sstream>
+#include "table.h"
 
 namespace cedit {
 	class Editor

@@ -17,8 +17,8 @@ Prompt::Prompt(COORD pos, COORD size, HANDLE& input, HANDLE& output, std::string
 	
 	clearScreen();
 	do {
-		pollInput();
 		printInput();
+		pollInput();
 	} while (key != VK_RETURN);
 }
 
@@ -33,11 +33,12 @@ void Prompt::pollInput() {
 	ReadConsoleInput(input, events, 1, &status);
 	auto keyEvent = events[0].Event.KeyEvent;
 	auto vkey = keyEvent.wVirtualKeyCode;
-	key = keyEvent.uChar.AsciiChar;
 
 	if (!(keyEvent.dwControlKeyState & LEFT_CTRL_PRESSED)) {
-		bool isPrintable = key >= Editor::PRINTABLE_START && key <= Editor::PRINTABLE_END;
 		if (keyEvent.bKeyDown) {
+			key = keyEvent.uChar.AsciiChar;
+			bool isPrintable = key >= Editor::PRINTABLE_START && key <= Editor::PRINTABLE_END;
+
 			if (isPrintable) {
 				addCharacter(key);
 			}
@@ -45,7 +46,7 @@ void Prompt::pollInput() {
 				buffer.erase(buffer.end() - 1);
 				if (xstart) --xstart;
 			}
-			else if (vkey == VK_ESCAPE) { 
+			else if (vkey == VK_ESCAPE) {
 				buffer = ""s;
 				key = VK_RETURN;
 			}

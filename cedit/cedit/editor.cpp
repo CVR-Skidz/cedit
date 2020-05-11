@@ -402,6 +402,17 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 				x = 0; y = 0;
 				xstart = 0; ystart = 0;
 				break;
+			case 'T':
+				auto rows = prompt("Table rows: ");
+				auto columns = prompt("Table columns: ");
+				auto width = prompt("Cell width: ");
+				auto table = Table::newTable(rows, columns, width);
+
+				for (int i = 0; i < table.size(); ++i) {
+					addLine(table[i], y + ystart + i);
+				}
+
+				break;
 		}
 	}
 	else {
@@ -568,12 +579,18 @@ void Editor::processEnter() {
 	std::string newLine = currentLine();
 	int distanceToEnd = (int)newLine.length() - x - xstart;
 	newLine = newLine.substr(x + xstart, distanceToEnd);
-	std::string& currentL = lines[y + ystart];
-	currentL = currentL.erase(x + xstart, currentL.length());
+
+	if (currentLine().size()) {
+		std::string& currentL = lines[y + ystart];
+		currentL = currentL.erase(x + xstart, currentL.length());
+	}
 
 	//add new line;
 	addLine(newLine, y + ystart + 1);
 	++y;
+
+	if (y == lineCount)
+		addLine("", y + ystart);
 
 	if (y > height - 1) {
 		y = height - 1;

@@ -1,13 +1,13 @@
-+ Input key (cedit main)
-|
-+-> Process key (cedit editor.process)
-        |
-        +-> Return corresponding object 
-        |
-  is control object?
-    |
-  +-+---- no -------> Print object (result.print)
-  |
- yes
-  |
-  +  Run control object (result.execute)
+|     |     |     |
+|-----|-----|-----|
+|     |     |     | 1   /\
+|     |     |     | 2  Rows
+|     |     |     | 3   \/
+   1     2     3
+<----------------->
+Columns (1 header per column)
+<---->
+Cell 
+Width
+
+lines = rows + seperator + headings
