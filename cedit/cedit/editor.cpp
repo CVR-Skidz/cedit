@@ -166,7 +166,8 @@ void Editor::printLines() {
 		}
 		else {
 			finalLine = line.substr(xstart, availableOutputLength(line) + 1);
-			std::cout << finalLine;
+			//std::cout << finalLine;
+			MarkdownPrinter::print(finalLine, line, &output);
 		}
 
 		if (screenBuffer.size() > i) {

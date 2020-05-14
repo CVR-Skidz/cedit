@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <sstream>
 #include "table.h"
+#include "markdownPrinter.h"
 
 namespace cedit {
 	class Editor
