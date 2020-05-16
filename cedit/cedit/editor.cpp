@@ -461,6 +461,7 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 
 				x = 0;
 				standardizeCoords();
+				MarkdownPrinter::reset();
 				break;
 
 			case VK_NEXT:	//page down
@@ -472,6 +473,7 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 				}
 
 				x = 0;
+				MarkdownPrinter::reset();
 				break;
 		}
 	}
@@ -532,7 +534,10 @@ void Editor::moveCursorVert(int amount) {
 	//if cursor going off screen top
 	if (newpos < 0) {
 		newpos = 0;
-		if (ystart) --ystart;
+		if (ystart) {
+			--ystart;
+			MarkdownPrinter::reset();
+		}
 	}
 	else if (newpos + ystart > lineCount - 1) { //cant move passed end of file
 		if (lineCount) {
@@ -542,7 +547,10 @@ void Editor::moveCursorVert(int amount) {
 	}
 	else if (newpos > height - 1) { //if cursor going off bottom screen, adjusted for status bar
 		newpos = height - 1;
-		if (newpos + ystart < lineCount) ystart++;
+		if (newpos + ystart < lineCount) {
+			ystart++;
+			MarkdownPrinter::reset();
+		}
 	}
 
 	y = newpos;

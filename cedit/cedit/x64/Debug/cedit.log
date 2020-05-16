@@ -4,5 +4,4 @@
 D:\devel\src\c\cedit\cedit\cedit\prompt.cpp(63,45): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 D:\devel\src\c\cedit\cedit\cedit\prompt.cpp(75,56): warning C4267: 'initializing': conversion from 'size_t' to 'SHORT', possible loss of data
   Generating Code...
-  LINK : D:\devel\src\c\cedit\cedit\x64\Debug\cedit.exe not found or not built by the last incremental link; performing full link
   cedit.vcxproj -> D:\devel\src\c\cedit\cedit\x64\Debug\cedit.exe
