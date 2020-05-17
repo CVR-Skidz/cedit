@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <iostream>
 #include <regex>
 #include <windows.h>
@@ -23,11 +24,18 @@ namespace cedit {
 		static bool isQuote(std::string s);
 		static void printQuote(std::string s, HANDLE* ouptut);
 
-		static bool isTexBlock(std::string s);
-		static void printTextBlock(std::string s, HANDLE* output);
+		static bool isTexBlock(std::string s, int* endPos);
+		static void printTexBlock(std::string s, HANDLE* output, int len);
 
-		static bool isCodeBlock(std::string s);
-		static void printCodeBlock(std::string s, HANDLE* output);
+		static bool isCodeBlock(std::string s, int* endPos);
+		static void printCodeBlock(std::string s, HANDLE* output, int len);
+
+		//formats each token in a line
+		static void formatLine(std::string s, char delimeter, HANDLE* output);
+		static bool isBold(std::string s);
+		static void printBold(std::string s, HANDLE* output);
+		static bool isHighlight(std::string s);
+		static void printHighlight(std::string s, HANDLE* output);
 
 		enum block {
 			NONE,

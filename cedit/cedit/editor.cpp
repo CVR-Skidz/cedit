@@ -61,7 +61,6 @@ void Editor::setConsoleMode() {
 
 void Editor::processInput(int nEvents) {
 	for (auto i = 0; i < nEvents; ++i) {
-		statusMessage = std::to_string(events[i].EventType);
 		switch (events[i].EventType) {
 			case KEY_EVENT:
 				handleKeyboardEvent(events[i].Event.KeyEvent);
@@ -145,6 +144,7 @@ void Editor::printLines() {
 	cursor.bVisible = false;
 	SetConsoleCursorInfo(output, &cursor);
 	SetConsoleCursorPosition(output, {0,0});
+	MarkdownPrinter::reset();
 
 	//index of line to stop printing at
 	int bufferEndPos;
@@ -364,7 +364,6 @@ void Editor::handleMouseEvent(MOUSE_EVENT_RECORD mouseEvent) {
 			break;
 
 		case MOUSE_WHEELED:
-			statusMessage = std::to_string(mouseEvent.dwButtonState);
 			break;
 	}
 }
@@ -397,6 +396,7 @@ void Editor::handleControlSequence(KEY_EVENT_RECORD keyEvent) {
 				session = false;
 				break;
 			case 'N':
+				statusMessage = path;
 				path = ""s;
 				lineCount = 0;
 				lines.clear();
@@ -461,7 +461,6 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 
 				x = 0;
 				standardizeCoords();
-				MarkdownPrinter::reset();
 				break;
 
 			case VK_NEXT:	//page down
@@ -473,7 +472,6 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 				}
 
 				x = 0;
-				MarkdownPrinter::reset();
 				break;
 		}
 	}
@@ -536,7 +534,6 @@ void Editor::moveCursorVert(int amount) {
 		newpos = 0;
 		if (ystart) {
 			--ystart;
-			MarkdownPrinter::reset();
 		}
 	}
 	else if (newpos + ystart > lineCount - 1) { //cant move passed end of file
@@ -549,7 +546,6 @@ void Editor::moveCursorVert(int amount) {
 		newpos = height - 1;
 		if (newpos + ystart < lineCount) {
 			ystart++;
-			MarkdownPrinter::reset();
 		}
 	}
 
