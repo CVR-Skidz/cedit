@@ -1,2 +1,3 @@
 ﻿  markdownPrinter.cpp
+D:\devel\src\c\cedit\cedit\cedit\markdownPrinter.cpp(160,14): warning C4553: '==': result of expression not used; did you intend '='?
   cedit.vcxproj -> D:\devel\src\c\cedit\cedit\x64\Debug\cedit.exe

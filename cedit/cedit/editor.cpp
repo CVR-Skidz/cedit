@@ -172,12 +172,16 @@ void Editor::printLines() {
 
 		if (screenBuffer.size() > i) {
 			screenBuffer[i - ystart] = finalLine;
-			COORD eolPos = { (short)(finalLine.length()), (short)(i-ystart) };
-			SetConsoleCursorPosition(output, eolPos);
-			FillConsoleOutputCharacter(output, ' ', width - (DWORD)(finalLine.length()), 
-				eolPos, &count);
+			
 		}
 		else screenBuffer.push_back(finalLine); 
+
+		COORD eolPos = { (short)(finalLine.length()), (short)(i - ystart) };
+		SetConsoleCursorPosition(output, eolPos);
+		FillConsoleOutputAttribute(output, BODY_STYLE, width - (DWORD)(finalLine.length()),
+			eolPos, &count);
+		FillConsoleOutputCharacter(output, ' ', width - (DWORD)(finalLine.length()),
+			eolPos, &count);
 
 		std::cout << std::endl;
 	}

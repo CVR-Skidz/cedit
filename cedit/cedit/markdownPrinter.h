@@ -32,6 +32,8 @@ namespace cedit {
 
 		//formats each token in a line
 		static void formatLine(std::string s, char delimeter, HANDLE* output);
+		//helper function for formatLine
+		static void emphasize(std::string s, HANDLE* output);
 		static bool isBold(std::string s);
 		static void printBold(std::string s, HANDLE* output);
 		static bool isHighlight(std::string s);
@@ -44,7 +46,14 @@ namespace cedit {
 			TABLE
 		};
 
+		enum format {
+			BOLD,
+			HIGHLIGHT,
+			NORMAL
+		};
+
 		static block open;
+		static format formatting;
 		static char fg;
 		constexpr static char FOREGROUND_W =
 			FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED;

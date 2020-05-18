@@ -4,6 +4,7 @@ using namespace cedit;
 
 char MarkdownPrinter::fg = MarkdownPrinter::FOREGROUND_W;
 MarkdownPrinter::block MarkdownPrinter::open = block::NONE;
+MarkdownPrinter::format MarkdownPrinter::formatting = format::NORMAL;
 
 void MarkdownPrinter::print(std::string s, std::string l, HANDLE* output) {
 	int length = 0;
@@ -21,13 +22,14 @@ void MarkdownPrinter::print(std::string s, std::string l, HANDLE* output) {
 		printTexBlock(s, output, length);
 	}
 	else {
-		std::cout << s;
-		//formatLine(s, ' ', output);
+		//std::cout << s;
+		formatLine(s, ' ', output);
 	}
 }
 
 void MarkdownPrinter::reset() {
 	open = block::NONE;
+	formatting = format::NORMAL;
 }
 
 bool MarkdownPrinter::isHeading(std::string s) {
@@ -37,8 +39,9 @@ bool MarkdownPrinter::isHeading(std::string s) {
 void MarkdownPrinter::printHeading(std::string s, HANDLE* output) {
 	fg = FOREGROUND_BLUE| FOREGROUND_GREEN | FOREGROUND_INTENSITY;
 	SetConsoleTextAttribute(*output, fg);
-	std::cout << s;
+	formatLine(s, ' ', output);
 	SetConsoleTextAttribute(*output, FOREGROUND_W);
+	fg = FOREGROUND_W;
 }
 
 bool MarkdownPrinter::isQuote(std::string s) {
@@ -50,6 +53,7 @@ void MarkdownPrinter::printQuote(std::string s, HANDLE* output) {
 	SetConsoleTextAttribute(*output, fg);
 	std::cout << s;
 	SetConsoleTextAttribute(*output, FOREGROUND_W);
+	fg = FOREGROUND_W;
 }
 
 bool MarkdownPrinter::isTexBlock(std::string s, int* endPos) {
@@ -120,44 +124,79 @@ void MarkdownPrinter::formatLine(std::string s, char delimeter, HANDLE* output) 
 
 	while ((end = s.find(delimeter, start)) != std::string::npos) {
 		if (end) {
-			tokens.push_back(s.substr(start, end - start));
+			emphasize(s.substr(start, end - start), output);
 		}
 
+		std::cout << s.substr(end, 1);
 		start = end + 1;
 	}
-	tokens.push_back(s.substr(start));
+	emphasize(s.substr(start), output);
+}
 
-	for (auto token : tokens) {
-		if (isHighlight(token)) {
-			printHighlight(token, output);
-		}
-		else if (isBold(token)) {
-			printBold(token, output);
-		}
-		else {
-			std::cout << token;
-		}
-
-		if (!token.empty()) std::cout << delimeter;
+void MarkdownPrinter::emphasize(std::string s, HANDLE* output) {
+	if (isHighlight(s) || formatting == format::HIGHLIGHT) {
+		printHighlight(s, output);
+	}
+	else if (isBold(s) || formatting == format::BOLD) {
+		printBold(s, output);
+	}
+	else {
+		std::cout << s;
 	}
 }
 
 bool MarkdownPrinter::isBold(std::string s) {
-	return std::regex_match(s, std::regex("\\*\\*.*\\*\\*"));
+	bool open = std::regex_match(s, std::regex("\\*\\*[^\\*]*"));
+
+	if (open) {
+		formatting = format::BOLD;
+	}
+	else if (std::regex_match(s, std::regex(".*\\*\\*"))) {
+		formatting = format::NORMAL;
+		return true;
+	}
+	else if (std::regex_match(s, std::regex("\\*\\*.*\\*\\*"))) {
+		//only one word
+		formatting == format::NORMAL;
+		return true;
+	}
+
+	return open;
 }
 
 void MarkdownPrinter::printBold(std::string s, HANDLE* output) {
 	SetConsoleTextAttribute(*output, fg | BACKGROUND_BLUE);
 	std::cout << s;
-	SetConsoleTextAttribute(*output, FOREGROUND_W);
+	
+	if (formatting != format::BOLD) {
+		SetConsoleTextAttribute(*output, FOREGROUND_W);
+	}
 }
 
 bool MarkdownPrinter::isHighlight(std::string s) {
-	return std::regex_match(s, std::regex("`[^`]*`"));
+	bool open = std::regex_match(s, std::regex("`[^`]*"));
+
+	if (open) {
+		formatting = format::HIGHLIGHT;
+	}
+	else if (std::regex_match(s, std::regex("[^`]*`"))) {
+		formatting = format::NORMAL;
+		return true;
+	}
+	else if (std::regex_match(s, std::regex("`[^`]*`"))) {
+		//only one word
+		formatting = format::NORMAL;
+		return true;
+	}
+
+	return open;
 }
 
 void MarkdownPrinter::printHighlight(std::string s, HANDLE* output) {
-	SetConsoleTextAttribute(*output, fg | BACKGROUND_GREEN);
+	SetConsoleTextAttribute(*output, fg | BACKGROUND_RED | BACKGROUND_BLUE);
 	std::cout << s;
-	SetConsoleTextAttribute(*output, FOREGROUND_W);
+
+	if (formatting != format::HIGHLIGHT) {
+		SetConsoleTextAttribute(*output, FOREGROUND_W);
+	}
 }
