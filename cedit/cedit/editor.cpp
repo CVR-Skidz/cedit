@@ -459,12 +459,19 @@ void Editor::handleNavigationSequence(KEY_EVENT_RECORD keyEvent) {
 			}
 
 			case VK_PRIOR:	//page up
-				if (y >= height - 1) y -= (height - 1);
+				/*if (y >= height - 1) y -= (height - 1);
 				else if (ystart) ystart -= (height - 1);
 				else y = 0;
 
 				x = 0;
 				standardizeCoords();
+				*/
+
+				ystart -= height;
+				if (ystart < 0) {
+					ystart = 0;
+					y = 0;
+				}
 				break;
 
 			case VK_NEXT:	//page down

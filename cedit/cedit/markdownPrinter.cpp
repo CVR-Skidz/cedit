@@ -85,7 +85,7 @@ void MarkdownPrinter::printTexBlock(std::string s, HANDLE* output, int len) {
 	else {
 		std::cout << s;
 		SetConsoleTextAttribute(*output, FOREGROUND_W);
-
+		fg = FOREGROUND_W;
 	}
 }
 
